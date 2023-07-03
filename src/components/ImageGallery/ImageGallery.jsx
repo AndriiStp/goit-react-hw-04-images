@@ -1,25 +1,23 @@
-import React, { Component } from 'react';
+import { useState, udeEffect} from 'react';
 import PropTypes from 'prop-types';
 import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import Loader from 'components/Loader/Loader';
 import css from './imageGallery.module.css';
 
-class ImageGallery extends Component {
-  state = {
-    images: [],
-    status: 'idle',
-  };
+const ImageGallery = ({ searchQuery, page, onImagesData }) => {
+
+  const [images, setImages] = useState([]);
+  const [status, setStatus] = useState('idle');
 
   componentDidUpdate(prevProps) {
-    const { searchQuery, page } = this.props;
-
+    
     if (prevProps.searchQuery !== searchQuery || prevProps.page !== page) {
       this.fetchImages(searchQuery, page);
     }
   }
 
-  fetchImages = (searchQuery, page) => {
-    this.setState({ status: 'pending' });
+  const fetchImages = (searchQuery, page) => {
+    setStatus('pending');
 
     fetch(
       `https://pixabay.com/api/?q=${searchQuery}&page=${page}&key=36119540-6b0ed103a080a17c105931ea0&image_type=photo&orientation=horizontal&per_page=12`
@@ -34,7 +32,8 @@ class ImageGallery extends Component {
         const { hits, totalHits } = imagesData;
 
         if (page === 1) {
-          this.setState({ images: hits, status: 'resolved' });
+          setImages(hits);
+          setStatus('resolved')
         } else {
           this.setState(prevState => ({
             images: [...prevState.images, ...hits],
@@ -42,16 +41,13 @@ class ImageGallery extends Component {
           }));
         }
 
-        this.props.onImagesData(hits, totalHits);
+        onImagesData(hits, totalHits);
       })
       .catch(error => {
         console.error(error);
-        this.setState({ status: 'rejected' });
+        setStatus('rejected');
       });
   };
-
-  render() {
-    const { images, status } = this.state;
 
     if (status === 'idle') {
       return null;
@@ -78,7 +74,6 @@ class ImageGallery extends Component {
       </ul>
     );
   }
-}
 
 ImageGallery.propTypes = {
   searchQuery: PropTypes.string.isRequired,
